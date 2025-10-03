@@ -1,0 +1,40 @@
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: react_app
+    ports:
+      - "3000:80" # frontend available at http://localhost:3000
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    container_name: node_app
+    ports:
+      - "3500:3500"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+      PORT: 3500
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
