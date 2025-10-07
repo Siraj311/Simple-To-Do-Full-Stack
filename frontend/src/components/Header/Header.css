@@ -19,7 +19,7 @@ a {
     font-weight: 700;
 }
 
-.loginBtn button {
+.logoutBtn button {
   width: 157px;
   height: 58px;
   outline: none;
@@ -29,5 +29,11 @@ a {
   font-size: 20px;
   font-weight: 500;
   background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logoutBtn button:hover {
+  transform: scale(1.05);
   cursor: pointer;
 }

@@ -52,9 +52,9 @@ const createTask = asyncHandler(async (req, res) => {
     res.status(201).json({ message: 'New task created' });
 })
 
-// PATCH /api/v1/tasks
+// PATCH /api/v1/tasks/:id
 const completeTask = asyncHandler(async (req, res) => {
-    const { id  } = req.body;
+    const { id  } = req.params;
     const userId = req.user.id;
 
     if (!id) {
@@ -63,7 +63,7 @@ const completeTask = asyncHandler(async (req, res) => {
 
     const taskCheck = await pool.query(
         'SELECT * FROM task WHERE id = $1 AND user_id = $2',
-        [taskId, userId]
+        [id, userId]
     );
 
     if (taskCheck.rows.length === 0) {
@@ -72,7 +72,7 @@ const completeTask = asyncHandler(async (req, res) => {
 
     await pool.query(
         'UPDATE task SET completed = TRUE WHERE id = $1',
-        [taskId]
+        [id]
     );
 
     res.status(200).json({ message: `Task '${taskCheck.rows[0].title}' marked as completed` });

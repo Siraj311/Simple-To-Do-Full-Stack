@@ -9,6 +9,8 @@ router.use(verifyJWT)
 router.route('/')
   .get(tasksController.getTasks)
   .post(tasksController.createTask)
+
+router.route('/:id') 
   .patch(tasksController.completeTask)
 
 module.exports = router

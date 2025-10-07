@@ -8,16 +8,21 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-async function checkConnection() {
-  try {
-    const client = await pool.connect();
-    console.log("✅ PostgreSQL connected successfully!");
-    client.release();
-  } catch (err) {
-    console.error("❌ Error connecting to PostgreSQL:", err.message);
+const connectWithRetry = async () => {
+  let connected = false;
+  while (!connected) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('Connected to DB');
+      connected = true;
+    } catch (err) {
+      console.error(err);
+      console.log('DB not ready yet, retrying in 2s...');
+      await new Promise(res => setTimeout(res, 2000));
+    }
   }
-}
+};
 
-checkConnection();
+connectWithRetry();
 
 module.exports = pool;

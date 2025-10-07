@@ -57,10 +57,25 @@ const Tasks = () => {
     }
   }
 
-  const handleDone = (taskId, taskTitle) => {
-    setTasks(prev => prev.filter((task) => task.id !== taskId));
-    toast.success(`${taskTitle} Completed !`);
-  }
+  const handleDone = async (id, taskTitle) => {
+    try {
+      await axiosPrivate.patch(`/tasks/${id}`);
+
+      const res = await axiosPrivate.get('/tasks?limit=5');
+      setTasks(res.data);
+
+      toast.success(`${taskTitle} Completed!`);
+    } catch (err) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        toast.error('Session expired. Please log in again.');
+        setAuth({});
+        navigate('/', { state: { from: location }, replace: true });
+      } else {
+        console.error(err);
+        toast.error('Failed to update task.');
+      }
+    }
+  };
 
   useEffect(() => {
     const getTasks = async () => {

@@ -60,20 +60,20 @@ const login = asyncHandler(async (req, res) => {
         }
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '5s' }
+      { expiresIn: '10m' }
     )
 
     const refreshToken = jwt.sign(
       { "email": foundUser.email },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '20s' }
+      { expiresIn: '30m' }
     )
 
     res.cookie('jwt', refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
-      maxAge: 20 * 1000
+      maxAge: 30 * 60 * 1000
     }) 
 
     res.json({ id: foundUser.id, accessToken })
@@ -107,7 +107,7 @@ const refresh = (req, res) => {
             }
           },
           process.env.ACCESS_TOKEN_SECRET,
-          { expiresIn: '5s' }
+          { expiresIn: '10m' }
         )
         
         res.json({ accessToken })

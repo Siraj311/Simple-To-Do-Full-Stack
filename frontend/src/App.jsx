@@ -1,6 +1,4 @@
-import { useContext } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router';
-// import { AuthContext } from './context/AuthContext';
 
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -10,10 +8,10 @@ import useAuth from './hooks/useAuth';
 
 const ProtectedRoute = () => {
   const { auth } = useAuth();
-  if (auth?.user) {
-    return <Navigate to="/tasks" replace />;
+  if (!auth?.user) {
+    return <Navigate to="/" replace />;
   }
-
+  
   return <Outlet />;
 };
 

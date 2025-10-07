@@ -1,7 +1,25 @@
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import './Header.css';
+import useAuth from "../../hooks/useAuth";
+import { axiosPrivate } from "../../api/axios";
+import { toast } from 'react-toastify';
 
 const Header = () => {
+  const { auth, setAuth } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await axiosPrivate.post('/auth/logout');
+      setAuth({});
+      toast.info("Logged out successfully");
+      navigate('/', { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+      toast.error("Logout failed. Try again.");
+    }
+  };
+
   return (
     <div className="navbar">
       <Link to="/">
@@ -10,8 +28,8 @@ const Header = () => {
         </div>
       </Link>
 
-      <div className="loginBtn">
-        <Link to="/login"><button>Login</button></Link>
+      <div className="logoutBtn">
+        {auth?.user && <button onClick={handleLogout}>Logout</button>}
       </div>
     </div>
   )
