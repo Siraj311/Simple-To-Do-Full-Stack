@@ -1,6 +1,5 @@
 const { Pool } = require("pg");
 
-// Create a connection pool
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -9,7 +8,6 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-// Function to test the connection
 async function checkConnection() {
   try {
     const client = await pool.connect();
@@ -20,7 +18,6 @@ async function checkConnection() {
   }
 }
 
-// Run the check on startup
 checkConnection();
 
 module.exports = pool;

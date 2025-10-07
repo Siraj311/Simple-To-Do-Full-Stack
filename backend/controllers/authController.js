@@ -1,21 +1,49 @@
-const User = require('../models/User')
+const pool = require('../config/db');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const asyncHandler = require('express-async-handler')
 
-// @desc Login
-// @route POST /auth
-// @access Public
-const login = asyncHandler(async (req, res) => {
-    const { username, password } = req.body
 
-    if(!username || !password) {
+// POST /api/v1/auth/signup
+const signup = asyncHandler(async (req, res) => {
+    const { username, email, password } = req.body
+
+    if (!username || !password || !email) {
+        return res.status(400).json({ message: 'All fields are required' })
+    }
+
+    const duplicateUser = await pool.query('SELECT * FROM "user" WHERE email = $1', [email]);
+
+    if (duplicateUser.rows.length > 0) {
+        return res.status(409).json({ message: 'Duplicate email' })
+    }
+
+    const hashedPwd = await bcrypt.hash(password, 10)
+
+    const result = await pool.query(
+    'INSERT INTO "user" (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email',
+      [username, email, hashedPwd]
+    );
+
+    if (result.rows.length > 0) {  
+        res.status(201).json({ message: `New user ${username} created` })
+    } else {
+        res.status(400).json({ message: 'Invalid user data received' })
+    }
+})
+
+// POST /api/v1/auth/login
+const login = asyncHandler(async (req, res) => {
+    const { email, password } = req.body
+
+    if(!email || !password) {
       return res.status(400).json({ message: 'All fields are required' })
     }
 
-    const foundUser = await User.findOne({ username }).exec()
+    const userQuery = await pool.query('SELECT * FROM "user" WHERE email = $1', [email]);
+    const foundUser = userQuery.rows[0];
 
-    if(!foundUser || !foundUser.active) {
+    if(!foundUser) {
       return res.status(401).json({ message: 'Unauthorized' })
     }
 
@@ -25,36 +53,33 @@ const login = asyncHandler(async (req, res) => {
 
     const accessToken = jwt.sign(
       {
-        "UserInfo": {
+        "User": {
+          "id": foundUser.id,
           "username": foundUser.username,
-          "roles": foundUser.roles
+          "email": foundUser.email,
         }
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '10s' }
+      { expiresIn: '5s' }
     )
 
     const refreshToken = jwt.sign(
-      { "username": foundUser.username },
+      { "email": foundUser.email },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: '20s' }
     )
 
-    // Create secure cookie with refresh token
     res.cookie('jwt', refreshToken, {
-      httpOnly: true, // accessible only by web server
-      secure: true, // https
-      sameSite: 'None', // cross-site cookie
-      maxAge: 7 * 24 * 60 * 60 * 1000 // cookie expiry: set to match rT
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: 20 * 1000
     }) 
 
-    // Send accessToken containing username and roles
-    res.json({ accessToken })
+    res.json({ id: foundUser.id, accessToken })
 })
 
-// @desc Refresh
-// @route GET /auth/refresh
-// @access Public - because access token has expired
+// GET /api/v1/auth/refresh
 const refresh = (req, res) => {
     const cookies = req.cookies
 
@@ -68,19 +93,21 @@ const refresh = (req, res) => {
       asyncHandler(async (err, decoded) => {
         if(err) return res.status(403).json({ message: 'Forbidden' })
 
-        const foundUser = await User.findOne({ username: decoded.username }).exec()
+        const userQuery = await pool.query('SELECT * FROM "user" WHERE email = $1', [decoded.email]);
+        const foundUser = userQuery.rows[0];
         
         if(!foundUser) return res.status(401).json({ message: 'Unauthorized' })
 
         const accessToken = jwt.sign(
           {
-            "UserInfo": {
+            "User": {
+              "id": foundUser.id,
               "username": foundUser.username,
-              "roles": foundUser.roles
+              "email": foundUser.email,
             }
           },
           process.env.ACCESS_TOKEN_SECRET,
-          { expiresIn: '10s' }
+          { expiresIn: '5s' }
         )
         
         res.json({ accessToken })
@@ -88,18 +115,17 @@ const refresh = (req, res) => {
     )
 }
 
-// @desc Logout
-// @route POST /auth/logout
-// @access Public - just to clear cookie if exists
+// POST /api/v1/auth/logout
 const logout = (req, res) => {
     const cookies = req.cookies
-    if(!cookies?.jwt) return res.sendStatus(204) // No content
+    if(!cookies?.jwt) return res.sendStatus(204)
 
     res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true })
     res.json({ message: 'Cookie cleared' })
 }
 
 module.exports = {
+    signup,
     login,
     refresh,
     logout

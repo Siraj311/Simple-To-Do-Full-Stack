@@ -7,15 +7,14 @@ const corsOptions = require('./config/corsOptions');
 const express = require('express');
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(cors(corsOptions));
 app.use(cookieParser());
+app.use(express.json());
 
 const PORT = process.env.PORT || 3500;
 
-// app.use('api/v1/auth', require('./routes/authRoutes'));
-// app.use('api/v1/users', require('./routes/userRoutes'));
-// app.use('api/v1/notes', require('./routes/noteRoutes'));
+app.use('/api/v1/auth', require('./routes/authRoutes'));
+app.use('/api/v1/tasks', require('./routes/taskRoutes'));
 
 app.all(/.*/, (req, res) => {
   res.status(404);
