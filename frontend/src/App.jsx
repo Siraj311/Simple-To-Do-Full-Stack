@@ -6,39 +6,22 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Tasks from './pages/Tasks';
 import Signup from './pages/Signup';
+import useAuth from './hooks/useAuth';
 
 const ProtectedRoute = () => {
-  // const { refreshToken, isLoading } = useContext(AuthContext);
-
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       Loading...
-  //     </div>
-  //   );
-  // }
-
-  // if (!refreshToken) {
-  //   return <Navigate to="/" replace />;
-  // }
+  const { auth } = useAuth();
+  if (auth?.user) {
+    return <Navigate to="/tasks" replace />;
+  }
 
   return <Outlet />;
 };
 
 const PublicRoute = () => {
-  // const { refreshToken, isLoading } = useContext(AuthContext);
-
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       Loading...
-  //     </div>
-  //   );
-  // }
-
-  // if (refreshToken) {
-  //   return <Navigate to="/tasks" replace />;
-  // }
+  const { auth } = useAuth();
+  if (auth?.user) {
+    return <Navigate to="/tasks" replace />;
+  }
 
   return <Outlet />;
 };
